@@ -1,0 +1,3 @@
+total    ap: 0.1516 rec: 0.5000 
+rare     ap: 0.1019 rec: 0.4800 
+non-rare ap: 0.1615 rec: 0.5040 
