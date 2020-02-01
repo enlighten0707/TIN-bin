@@ -785,7 +785,7 @@ def Image_Resize(GT):
         if im_shape[1] > 512:
             ratio = 512. / im_shape[1]
             
-    im_orig = cv2.resize(im_orig, (int(ratio*im_shape[1]), int(ratio*im_shape[0])))
+    im_orig = cv2.resize(im_orig, (int(ratio*im_shape[1]), int(ratio*im_shape[0])))# pay attention:width and height inversed for cv2.imread
     im_shape = im_orig.shape
     im_orig  = im_orig.reshape(1, im_shape[0], im_shape[1], 3)
     return im_orig,im_shape,ratio
@@ -810,8 +810,8 @@ def Augmented_HO_Neg_HICO_pose_pattern_version2(GT, Trainval_Neg, shape, Pos_aug
 
         length_min = min(len(Human_augmented_temp),len(Object_augmented_temp))
 
-        Human_augmented_temp  =  Human_augmented_temp[:length_min]
-        Object_augmented_temp = Object_augmented_temp[:length_min]
+        Human_augmented_temp  =  Human_augmented_temp[:length_min] 
+        Object_augmented_temp = Object_augmented_temp[:length_min] 
     
         action_HO__temp = Generate_action_HICO(GT[i][1])
         action_HO_temp  = action_HO__temp
@@ -867,11 +867,11 @@ def Augmented_HO_Neg_HICO_pose_pattern_version2(GT, Trainval_Neg, shape, Pos_aug
                 Object_augmented = np.concatenate((Object_augmented,(ratio*np.array([0, Neg[3][0], Neg[3][1], Neg[3][2], Neg[3][3]])).reshape(1,5)), axis=0)
                 action_HO        = np.concatenate((action_HO, Generate_action_HICO([Neg[1]])), axis=0)
                 
-#                if np.array(Neg[7]).any==None:
-#                    Pattern_ = Get_next_sp_with_pose(ratio*np.array(Neg[2], dtype='float64'), ratio*np.array(Neg[3], dtype='float64'), None).reshape(1, 64, 64, 3)
-#                else:
-#                    Pattern_ = Get_next_sp_with_pose(ratio*np.array(Neg[2], dtype='float64'), ratio*np.array(Neg[3], dtype='float64'), ratio * np.array(Neg[7])).reshape(1, 64, 64, 3)
-                Pattern_=Get_next_sp_with_pose_include_none(Neg,ratio)
+                if Neg[7] is None:
+                    Pattern_ = Get_next_sp_with_pose(ratio*np.array(Neg[2], dtype='float64'), ratio*np.array(Neg[3], dtype='float64'), None).reshape(1, 64, 64, 3)
+                else:
+                    Pattern_ = Get_next_sp_with_pose(ratio*np.array(Neg[2], dtype='float64'), ratio*np.array(Neg[3], dtype='float64'), ratio * np.array(Neg[7])).reshape(1, 64, 64, 3)
+#                Pattern_=Get_next_sp_with_pose_include_none(Neg,ratio)
                 Pattern  = np.concatenate((Pattern, Pattern_), axis=0)
         else:
             List = random.sample(range(len(Trainval_Neg[image_id])), len(Trainval_Neg[image_id]))
@@ -881,11 +881,11 @@ def Augmented_HO_Neg_HICO_pose_pattern_version2(GT, Trainval_Neg, shape, Pos_aug
                 Human_augmented  = np.concatenate((Human_augmented, (ratio*np.array([0, Neg[2][0], Neg[2][1], Neg[2][2], Neg[2][3]])).reshape(1,5)), axis=0)
                 Object_augmented = np.concatenate((Object_augmented,(ratio*np.array([0, Neg[3][0], Neg[3][1], Neg[3][2], Neg[3][3]])).reshape(1,5)), axis=0)
                 action_HO        = np.concatenate((action_HO, Generate_action_HICO([Neg[1]])), axis=0)
-#                if np.array(Neg[7]).any==None:
-#                    Pattern_ = Get_next_sp_with_pose(ratio*np.array(Neg[2], dtype='float64'), ratio*np.array(Neg[3], dtype='float64'), None).reshape(1, 64, 64, 3)
-#                else:
-#                    Pattern_ = Get_next_sp_with_pose(ratio*np.array(Neg[2], dtype='float64'), ratio*np.array(Neg[3], dtype='float64'), ratio * np.array(Neg[7])).reshape(1, 64, 64, 3)
-                Pattern_=Get_next_sp_with_pose_include_none(Neg,ratio)
+                if Neg[7] is None:
+                    Pattern_ = Get_next_sp_with_pose(ratio*np.array(Neg[2], dtype='float64'), ratio*np.array(Neg[3], dtype='float64'), None).reshape(1, 64, 64, 3)
+                else:
+                    Pattern_ = Get_next_sp_with_pose(ratio*np.array(Neg[2], dtype='float64'), ratio*np.array(Neg[3], dtype='float64'), ratio * np.array(Neg[7])).reshape(1, 64, 64, 3)
+#                Pattern_=Get_next_sp_with_pose_include_none(Neg,ratio)
                 Pattern  = np.concatenate((Pattern, Pattern_), axis=0)
 
     num_pos_neg = len(Human_augmented)
@@ -904,30 +904,30 @@ def Augmented_HO_Neg_HICO_pose_pattern_version2(GT, Trainval_Neg, shape, Pos_aug
 
     return Pattern, Human_augmented, Object_augmented, action_HO, num_pos, binary_label
 
-def Get_next_sp_with_pose_include_none(Neg,ratio):
-    if Neg is None :
-        Pattern_=Get_next_sp_with_pose(None,None,None).reshape(1, 64, 64, 3)
-        return Pattern_
-    if Neg[2] is None:
-        if Neg[3] is None:
-            if Neg[7] is None:
-                Pattern_ = Get_next_sp_with_pose(None,None,None).reshape(1, 64, 64, 3)
-            else:
-                Pattern_ = Get_next_sp_with_pose(None, None, ratio * np.array(Neg[7])).reshape(1, 64, 64, 3)
-        else:
-            if Neg[7] is None:
-                Pattern_ = Get_next_sp_with_pose(None,ratio*np.array(Neg[3], dtype='float64'),None).reshape(1, 64, 64, 3)
-            else:
-                Pattern_ = Get_next_sp_with_pose(None,ratio*np.array(Neg[3], dtype='float64'), ratio * np.array(Neg[7])).reshape(1, 64, 64, 3)
-    else:
-        if Neg[3] is None:
-            if Neg[7] is None:
-                Pattern_ = Get_next_sp_with_pose(ratio*np.array(Neg[2], dtype='float64'),None,None).reshape(1, 64, 64, 3)
-            else:
-                Pattern_ = Get_next_sp_with_pose(ratio*np.array(Neg[2], dtype='float64'), None, ratio * np.array(Neg[7])).reshape(1, 64, 64, 3)
-        else:
-            if Neg[7] is None:
-                Pattern_ = Get_next_sp_with_pose(ratio*np.array(Neg[2], dtype='float64'),ratio*np.array(Neg[3], dtype='float64'),None).reshape(1, 64, 64, 3)
-            else:
-                Pattern_ = Get_next_sp_with_pose(ratio*np.array(Neg[2], dtype='float64'),ratio*np.array(Neg[3], dtype='float64'), ratio * np.array(Neg[7])).reshape(1, 64, 64, 3)
-    return Pattern_
+#def Get_next_sp_with_pose_include_none(Neg,ratio):
+#    if Neg is None :
+#        Pattern_=Get_next_sp_with_pose(None,None,None).reshape(1, 64, 64, 3)
+#        return Pattern_
+#    if Neg[2] is None:
+#        if Neg[3] is None:
+#            if Neg[7] is None:
+#                Pattern_ = Get_next_sp_with_pose(None,None,None).reshape(1, 64, 64, 3)
+#            else:
+#                Pattern_ = Get_next_sp_with_pose(None, None, ratio * np.array(Neg[7])).reshape(1, 64, 64, 3)
+#        else:
+#            if Neg[7] is None:
+#                Pattern_ = Get_next_sp_with_pose(None,ratio*np.array(Neg[3], dtype='float64'),None).reshape(1, 64, 64, 3)
+#            else:
+#                Pattern_ = Get_next_sp_with_pose(None,ratio*np.array(Neg[3], dtype='float64'), ratio * np.array(Neg[7])).reshape(1, 64, 64, 3)
+#    else:
+#        if Neg[3] is None:
+#            if Neg[7] is None:
+#                Pattern_ = Get_next_sp_with_pose(ratio*np.array(Neg[2], dtype='float64'),None,None).reshape(1, 64, 64, 3)
+#            else:
+#                Pattern_ = Get_next_sp_with_pose(ratio*np.array(Neg[2], dtype='float64'), None, ratio * np.array(Neg[7])).reshape(1, 64, 64, 3)
+#        else:
+#            if Neg[7] is None:
+#                Pattern_ = Get_next_sp_with_pose(ratio*np.array(Neg[2], dtype='float64'),ratio*np.array(Neg[3], dtype='float64'),None).reshape(1, 64, 64, 3)
+#            else:
+#                Pattern_ = Get_next_sp_with_pose(ratio*np.array(Neg[2], dtype='float64'),ratio*np.array(Neg[3], dtype='float64'), ratio * np.array(Neg[7])).reshape(1, 64, 64, 3)
+#    return Pattern_
