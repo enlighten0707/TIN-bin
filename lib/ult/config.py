@@ -35,7 +35,7 @@ __C.TRAIN_INIT_WEIGHT = 1
 #refer to models/train_solver
 
 # Continue Training or Training from iter 0  1--continue training  2--from iter 0  
-__C.TRAIN_MODULE_CONTINUE = 2
+__C.TRAIN_MODULE_CONTINUE = 1
 
 # Initial learning rate
 __C.TRAIN.LEARNING_RATE = 0.0001 #0.00001

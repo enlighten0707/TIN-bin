@@ -19,7 +19,7 @@ from ult.config import cfg
 from models.train_Solver_HICO_pose_pattern_inD_more_positive_coslr_random import train_net
 from networks.TIN_HICO_bin import ResNet50
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '1' # use GPU 0,1
+os.environ['CUDA_VISIBLE_DEVICES'] = '7' # use GPU 0,1
 # /Weights/TIN_HICO_test/HOI_iter_10.ckpt
 
 
@@ -55,7 +55,7 @@ if __name__ == '__main__':
     # change this to trained model of TIN for finetune, 1800000, '/Weights/' + args.model + '/HOI_iter_' + str(args.iteration) + '.ckpt'
     # change the module of init weight in config.py TRAIN_INIT_WEIGHT
     if cfg.TRAIN_MODULE_CONTINUE == 1:
-            weight    = cfg.ROOT_DIR + '/Weights/TIN/HOI_iter_.ckpt' # from ckpt which you wish to continue
+            weight    = cfg.ROOT_DIR + '/Weights/TIN_HICO_bin/HOI_iter_1800000.ckpt' # from ckpt which you wish to continue
     else:
             if cfg.TRAIN_INIT_WEIGHT == 1:
                 weight    = cfg.ROOT_DIR + '/Weights/res50_faster_rcnn/res50_faster_rcnn_iter_1190000.ckpt' # from faster R-CNN

@@ -18,7 +18,7 @@ import tensorflow as tf
 import cv2
 import h5py
 
-import config # use absolute import and config.cfg
+#import config # use absolute import and config.cfg
 
 np.set_printoptions(threshold=10000)
 image_folder_list = {'hico-train': '/Disk1/yonglu/iCAN/Data/hico_20160224_det/images/train2015/', 
@@ -271,38 +271,65 @@ def Get_next_sp_with_pose(human_box, object_box, human_pose, num_joints=17):
         skeleton = get_skeleton(human_box, human_pose, H, num_joints)
 
     Pattern = np.concatenate((Pattern, skeleton), axis=2)
-
+    
+    for i in range (1,60,5):
+            print (Pattern[i,i,:])
     return Pattern
 
-def Get_Next_Instance_HO_Neg_HICO_pose_pattern_version2(trainval_GT,  Trainval_Neg , image_id, Pos_augment=15, Neg_select=60):
-
-    GT       = trainval_GT[image_id] #image_id is int number
-    print(GT)
-    image_name = GT[0][0]  #image_name is a string
-    image_dataset=GT[0][4] 
-    im_file = image_folder_list[image_dataset] + image_name #new path added
-    im       = cv2.imread(im_file)
-    im_orig  = im.astype(np.float32, copy=True)
-    im_orig -= config.cfg.PIXEL_MEANS
-    im_shape = im_orig.shape
-    im_orig  = im_orig.reshape(1, im_shape[0], im_shape[1], 3)
-#    
-    Pattern, Human_augmented, Object_augmented, action_HO, num_pos, binary_label = Augmented_HO_Neg_HICO_pose_pattern_version2(GT, Trainval_Neg, im_shape, Pos_augment, Neg_select)
+def Get_Next_Instance_HO_Neg_HICO_pose_pattern_version2(trainval_GT, Trainval_Neg, image_id, Pos_augment=15, Neg_select=60):
+    
+    GT            = trainval_GT[image_id] #image_id is int number
+    im_orig,im_shape,ratio = Image_Resize(GT)      #extra opt on ratio? float32->np.round
+    
+    Pattern, Human_augmented, Object_augmented, action_HO, num_pos, binary_label = Augmented_HO_Neg_HICO_pose_pattern_version2(GT, Trainval_Neg, im_shape, Pos_augment, Neg_select, ratio)
     
     blobs = {}
-    blobs['image']       = im_orig
+#    blobs['image']       = im_orig
     blobs['H_boxes']     = Human_augmented
     blobs['O_boxes']     = Object_augmented
-    blobs['gt_class_HO'] = action_HO
+#    blobs['gt_class_HO'] = action_HO
 #    blobs['gt_class_O']  = np.matmul(action_HO, hico_obj_mask) > 0
 #    blobs['gt_class_O']  = blobs['gt_class_O'].astype(np.float32)
     blobs['sp']          = Pattern
     blobs['H_num']       = num_pos
-    blobs['binary_label'] = binary_label
+#    blobs['binary_label'] = binary_label
+    
 
     return blobs
 
-def Augmented_HO_Neg_HICO_pose_pattern_version2(GT, Trainval_Neg, shape, Pos_augment, Neg_select):
+def Image_Resize(GT):
+    image_name = GT[0][0] #image_name is a string
+    image_dataset=GT[0][4] 
+    
+    im_file = image_folder_list[image_dataset] + image_name #new path added
+    im   = cv2.imread(im_file)
+    im_orig  = im.astype(np.float32, copy=True)
+    im_orig -= np.array([[[102.9801, 115.9465, 122.7717]]])
+    im_shape = im_orig.shape
+    
+    print('orig shape = ')
+    print(im_shape)
+    
+    ratio = 1.0
+    if im_shape[0] > im_shape[1]:
+        if im_shape[0] > 512:
+            ratio = 512. / im_shape[0]
+    else:
+        if im_shape[1] > 512:
+            ratio = 512. / im_shape[1]
+            
+    im_orig = cv2.resize(im_orig, (int(ratio*im_shape[1]), int(ratio*im_shape[0])))# pay attention:width and height inversed for cv2.imread
+    im_shape = im_orig.shape
+    im_orig  = im_orig.reshape(1, im_shape[0], im_shape[1], 3)
+    
+    print('resized shape = ')
+    print(im_shape)
+    
+    return im_orig,im_shape,ratio
+    
+
+def Augmented_HO_Neg_HICO_pose_pattern_version2(GT, Trainval_Neg, shape, Pos_augment, Neg_select, ratio):
+    #added: resize the box by parameter-ratio
     GT_count = len(GT)
     aug_all = int(Pos_augment / GT_count)
     aug_last = Pos_augment - aug_all * (GT_count - 1) 
@@ -312,16 +339,16 @@ def Augmented_HO_Neg_HICO_pose_pattern_version2(GT, Trainval_Neg, shape, Pos_aug
     Pattern   = np.empty((0, 64, 64, 3), dtype=np.float32)
 
     for i in range(GT_count - 1):
-        Human    = GT[i][2]
-        Object   = GT[i][3]
+        Human    = np.round(np.array(GT[i][2]).astype(np.float32) * ratio)
+        Object   = np.round(np.array(GT[i][3]).astype(np.float32) * ratio)
 
         Human_augmented_temp  = Augmented_box(Human,  shape, aug_all)
         Object_augmented_temp = Augmented_box(Object, shape, aug_all)
 
         length_min = min(len(Human_augmented_temp),len(Object_augmented_temp))
 
-        Human_augmented_temp  =  Human_augmented_temp[:length_min]
-        Object_augmented_temp = Object_augmented_temp[:length_min]
+        Human_augmented_temp  =  Human_augmented_temp[:length_min] 
+        Object_augmented_temp = Object_augmented_temp[:length_min] 
     
         action_HO__temp = Generate_action_HICO(GT[i][1])
         action_HO_temp  = action_HO__temp
@@ -329,16 +356,19 @@ def Augmented_HO_Neg_HICO_pose_pattern_version2(GT, Trainval_Neg, shape, Pos_aug
             action_HO_temp = np.concatenate((action_HO_temp, action_HO__temp), axis=0)
 
         for j in range(length_min):
-            Pattern_ = Get_next_sp_with_pose(Human_augmented_temp[j][1:], Object_augmented_temp[j][1:], GT[i][7]).reshape(1, 64, 64, 3)
+            if GT[i][7] is None :
+                Pattern_ = Get_next_sp_with_pose(Human_augmented_temp[j][1:], Object_augmented_temp[j][1:], None).reshape(1, 64, 64, 3)
+            else:
+                Pattern_ = Get_next_sp_with_pose(Human_augmented_temp[j][1:], Object_augmented_temp[j][1:], np.array(GT[i][7])*ratio).reshape(1, 64, 64, 3)
             Pattern  = np.concatenate((Pattern, Pattern_), axis=0)
 
         Human_augmented.extend(Human_augmented_temp)
         Object_augmented.extend(Object_augmented_temp)
         action_HO.extend(action_HO_temp)
 
-    Human    = GT[GT_count - 1][2]
-    Object   = GT[GT_count - 1][3]
-
+    Human    = np.round(np.array(GT[GT_count - 1][2]).astype(np.float32) * ratio)
+    Object   = np.round(np.array(GT[GT_count - 1][3]).astype(np.float32) * ratio)
+    
     Human_augmented_temp  = Augmented_box(Human,  shape, aug_last)
     Object_augmented_temp = Augmented_box(Object, shape, aug_last)
 
@@ -353,7 +383,10 @@ def Augmented_HO_Neg_HICO_pose_pattern_version2(GT, Trainval_Neg, shape, Pos_aug
         action_HO_temp = np.concatenate((action_HO_temp, action_HO__temp), axis=0)
 
     for j in range(length_min):
-        Pattern_ = Get_next_sp_with_pose(Human_augmented_temp[j][1:], Object_augmented_temp[j][1:], GT[GT_count - 1][7]).reshape(1, 64, 64, 3)
+        if GT[GT_count - 1][7] is None:
+            Pattern_ = Get_next_sp_with_pose(Human_augmented_temp[j][1:], Object_augmented_temp[j][1:], None).reshape(1, 64, 64, 3)
+        else:
+            Pattern_ = Get_next_sp_with_pose(Human_augmented_temp[j][1:], Object_augmented_temp[j][1:], np.array(GT[GT_count - 1][7]) * ratio).reshape(1, 64, 64, 3)
         Pattern  = np.concatenate((Pattern, Pattern_), axis=0)
 
     Human_augmented.extend(Human_augmented_temp)
@@ -367,20 +400,29 @@ def Augmented_HO_Neg_HICO_pose_pattern_version2(GT, Trainval_Neg, shape, Pos_aug
         if len(Trainval_Neg[image_id]) < Neg_select:
             for Neg in Trainval_Neg[image_id]:
 
-                Human_augmented  = np.concatenate((Human_augmented,  np.array([0, Neg[2][0], Neg[2][1], Neg[2][2], Neg[2][3]]).reshape(1,5)), axis=0)
-                Object_augmented = np.concatenate((Object_augmented, np.array([0, Neg[3][0], Neg[3][1], Neg[3][2], Neg[3][3]]).reshape(1,5)), axis=0)
+                Human_augmented  = np.concatenate((Human_augmented, (ratio*np.array([0, Neg[2][0], Neg[2][1], Neg[2][2], Neg[2][3]])).reshape(1,5)), axis=0)
+                Object_augmented = np.concatenate((Object_augmented,(ratio*np.array([0, Neg[3][0], Neg[3][1], Neg[3][2], Neg[3][3]])).reshape(1,5)), axis=0)
                 action_HO        = np.concatenate((action_HO, Generate_action_HICO([Neg[1]])), axis=0)
-                Pattern_ = Get_next_sp_with_pose(np.array(Neg[2], dtype='float64'), np.array(Neg[3], dtype='float64'), Neg[7]).reshape(1, 64, 64, 3)
+                
+                if Neg[7] is None:
+                    Pattern_ = Get_next_sp_with_pose(ratio*np.array(Neg[2], dtype='float64'), ratio*np.array(Neg[3], dtype='float64'), None).reshape(1, 64, 64, 3)
+                else:
+                    Pattern_ = Get_next_sp_with_pose(ratio*np.array(Neg[2], dtype='float64'), ratio*np.array(Neg[3], dtype='float64'), ratio * np.array(Neg[7])).reshape(1, 64, 64, 3)
+#                Pattern_=Get_next_sp_with_pose_include_none(Neg,ratio)
                 Pattern  = np.concatenate((Pattern, Pattern_), axis=0)
         else:
             List = random.sample(range(len(Trainval_Neg[image_id])), len(Trainval_Neg[image_id]))
             for i in range(Neg_select):
                 Neg = Trainval_Neg[image_id][List[i]]
 
-                Human_augmented  = np.concatenate((Human_augmented,  np.array([0, Neg[2][0], Neg[2][1], Neg[2][2], Neg[2][3]]).reshape(1,5)), axis=0)
-                Object_augmented = np.concatenate((Object_augmented, np.array([0, Neg[3][0], Neg[3][1], Neg[3][2], Neg[3][3]]).reshape(1,5)), axis=0)
+                Human_augmented  = np.concatenate((Human_augmented, (ratio*np.array([0, Neg[2][0], Neg[2][1], Neg[2][2], Neg[2][3]])).reshape(1,5)), axis=0)
+                Object_augmented = np.concatenate((Object_augmented,(ratio*np.array([0, Neg[3][0], Neg[3][1], Neg[3][2], Neg[3][3]])).reshape(1,5)), axis=0)
                 action_HO        = np.concatenate((action_HO, Generate_action_HICO([Neg[1]])), axis=0)
-                Pattern_ = Get_next_sp_with_pose(np.array(Neg[2], dtype='float64'), np.array(Neg[3], dtype='float64'), Neg[7]).reshape(1, 64, 64, 3)
+                if Neg[7] is None:
+                    Pattern_ = Get_next_sp_with_pose(ratio*np.array(Neg[2], dtype='float64'), ratio*np.array(Neg[3], dtype='float64'), None).reshape(1, 64, 64, 3)
+                else:
+                    Pattern_ = Get_next_sp_with_pose(ratio*np.array(Neg[2], dtype='float64'), ratio*np.array(Neg[3], dtype='float64'), ratio * np.array(Neg[7])).reshape(1, 64, 64, 3)
+#                Pattern_=Get_next_sp_with_pose_include_none(Neg,ratio)
                 Pattern  = np.concatenate((Pattern, Pattern_), axis=0)
 
     num_pos_neg = len(Human_augmented)
@@ -400,9 +442,9 @@ def Augmented_HO_Neg_HICO_pose_pattern_version2(GT, Trainval_Neg, shape, Pos_aug
     return Pattern, Human_augmented, Object_augmented, action_HO, num_pos, binary_label
 
 #GT=pickle.load(open('Trainval_GT_10w_new.pkl', 'rb'), fix_imports=True, encoding='iso-8859-1', errors="strict")
-Trainval_GT=pickle.load(open('/Disk1/yonglu/detectron2/new_boxes/Trainval_GT_10w_new.pkl', "rb"))
+Trainval_GT=pickle.load(open('Trainval_GT_10w_new.pkl', "rb"))
 GT_new=changeForm(Trainval_GT)
-Trainval_Neg=pickle.load(open('/Disk1/yonglu/detectron2/new_boxes/Trainval_Neg_10w_new.pkl', "rb"))
-image_id = 10
-blobs=Get_Next_Instance_HO_Neg_HICO_pose_pattern_version2(GT_new, Trainval_Neg, image_id)
-print(blobs)
+Trainval_Neg=pickle.load(open('Trainval_Neg_10w_new_cut.pkl', "rb"))
+
+for image_id in range(1):
+    blobs=Get_Next_Instance_HO_Neg_HICO_pose_pattern_version2(GT_new, Trainval_Neg, image_id)

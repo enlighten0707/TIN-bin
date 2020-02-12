@@ -63,11 +63,11 @@ if __name__ == '__main__':
     sess.close()
 
   
-    # thres_X and thres_Y indicate the NIS threshold to suppress the pair which might be no-interaction
-    # thres_x = 0.1
-    # thres_y = 0.9
-
-    # os.chdir(cfg.ROOT_DIR + '/HICO-DET_Benchmark/')
-    # os.system("python Generate_HICO_detection_nis.py " + output_file + ' ' + cfg.ROOT_DIR + "/-Results/"+ args.model + "NIS_thres_x" + str(thres_x) + "_y" + str(thres_y) + "/ " + str(thres_y) + " " + str(thres_x))
-    # os.system('matlab -nodesktop -nosplash -r "Generate_detection '+ cfg.ROOT_DIR + '/-Results/'+ args.model+ 'NIS_thres_x'+ str(thres_x)+ '_y'+ str(thres_y)+ '/;quit;"')
+#     thres_X and thres_Y indicate the NIS threshold to suppress the pair which might be no-interaction
+#    thres_x = 0.1
+#    thres_y = 0.9
+#
+#    os.chdir(cfg.ROOT_DIR + '/HICO-DET_Benchmark/')
+#    os.system("python Generate_HICO_detection_nis.py " + output_file + ' ' + cfg.ROOT_DIR + "/-Results/"+ args.model + "NIS_thres_x" + str(thres_x) + "_y" + str(thres_y) + "/ " + str(thres_y) + " " + str(thres_x))
+#    os.system('matlab -nodesktop -nosplash -r "Generate_detection '+ cfg.ROOT_DIR + '/-Results/'+ args.model+ 'NIS_thres_x'+ str(thres_x)+ '_y'+ str(thres_y)+ '/;quit;"')
 
