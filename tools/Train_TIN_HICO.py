@@ -68,7 +68,7 @@ if __name__ == '__main__':
     tb_dir     = cfg.ROOT_DIR + '/logs/' + args.model + '/'
 
     # output directory where the models are saved
-    output_dir = cfg.ROOT_DIR + '/Weights/' + args.model + '/'
+    output_dir = cfg.ROOT_DIR + '/Weights/' + args.model + '_branch1/'
 
     net = ResNet50()
     train_net(net, Trainval_GT, Trainval_N, output_dir, tb_dir, args.Pos_augment, args.Neg_select, args.Restore_flag, weight, max_iters=args.max_iters)

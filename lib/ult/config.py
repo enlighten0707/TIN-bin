@@ -35,16 +35,16 @@ __C.TRAIN_INIT_WEIGHT = 1
 #refer to models/train_solver
 
 # Continue Training or Training from iter 0  1--continue training  2--from iter 0  
-__C.TRAIN_MODULE_CONTINUE = 1
+__C.TRAIN_MODULE_CONTINUE = 2
 
 # Initial learning rate
-__C.TRAIN.LEARNING_RATE = 0.0001 #0.00001
+__C.TRAIN.LEARNING_RATE = 0.00005 #0.0001
 
 # Drop out for binary_discriminator
 __C.TRAIN_DROP_OUT_BINARY = 0.8
 
 # Iterations between snapshots
-__C.TRAIN.SNAPSHOT_ITERS = 100000 #20000 
+__C.TRAIN.SNAPSHOT_ITERS = 100000 #100000 
 
 # 1--weight = 0.1  2--no loss weight of D, consider put the wts of binary loss here directly
 # __C.TRAIN_WEIGHT_LOSS = 2
@@ -65,7 +65,7 @@ __C.TRAIN.STEPSIZE = 20000
 __C.TRAIN.SNAPSHOT_KEPT = None
 
 # Iteration intervals for showing the loss during training, on command line interface
-__C.TRAIN.DISPLAY = 1000
+__C.TRAIN.DISPLAY = 100
 
 # The step interval for saving tensorflow summaries
 __C.TRAIN.SUMMARY_INTERVAL = 200
