@@ -16,8 +16,8 @@ import ipdb
 import os
 
 from ult.config import cfg
-from models.train_Solver_HICO_pose_pattern_inD_more_positive_coslr_random import train_net
-from networks.TIN_HICO_bin import ResNet50
+from models.train_Solver_HICO_binary_only import train_net
+from networks.TIN_HICO_binary_only import ResNet50
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '7' # use GPU 0,1
 
@@ -47,7 +47,7 @@ if __name__ == '__main__':
     args = parse_args()
 
     Trainval_GT       = pickle.load( open( '/Disk1/yonglu/iCAN/Data/Trainval_GT_10w_new.pkl', "rb" ) )
-    Trainval_N        = pickle.load( open( '/Disk1/yonglu/iCAN/Data/Trainval_Neg_10w_new.pkl', "rb" ) ) 
+    Trainval_N        = pickle.load( open( '/Disk1/yonglu/iCAN/Data/Trainval_Neg_10w_new_cut.pkl', "rb" ) ) 
     
     np.random.seed(cfg.RNG_SEED)
     # change this to trained model of TIN for finetune, 1800000, '/Weights/' + args.model + '/HOI_iter_' + str(args.iteration) + '.ckpt'
@@ -66,7 +66,7 @@ if __name__ == '__main__':
     tb_dir     = cfg.ROOT_DIR + '/logs/' + args.model + '/'
 
     # output directory where the models are saved
-    output_dir = cfg.ROOT_DIR + '/Weights/' + args.model + '_branch1/'
+    output_dir = cfg.ROOT_DIR + '/Weights/' + args.model
 
     net = ResNet50()
     train_net(net, Trainval_GT, Trainval_N, output_dir, tb_dir, args.Pos_augment, args.Neg_select, args.Restore_flag, weight, max_iters=args.max_iters)

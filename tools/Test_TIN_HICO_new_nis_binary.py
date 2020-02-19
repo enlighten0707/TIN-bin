@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # --------------------------------------------------------
 # Tensorflow TIN
 # Licensed under The MIT License [see LICENSE for details]
@@ -17,7 +18,7 @@ import os
 
 from networks.TIN_HICO_bin import ResNet50
 from ult.config import cfg
-from models.test_HICO_binary import test_net
+from models.test_Solver_HICO_new_nis_binary import test_net
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '2' # use GPU 0,1
 def parse_args():
@@ -60,3 +61,4 @@ if __name__ == '__main__':
     
     test_net(sess, net, Test_RCNN, output_file)
     sess.close()
+

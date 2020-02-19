@@ -1,15 +1,8 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Thu Jan 30 16:37:16 2020
-
-@author: 86150
-"""
-
 import numpy as np
+import pickle 
 
-Human=[100,200,300,400]
-ratio=0.85
+data=pickle.load(open('binary_score_all.pkl','rb'))
+for i in range (10):
+    print(data[i])
 
-Human    = np.round(np.array(Human).astype(np.float32) * ratio)
-
-print(Human)
